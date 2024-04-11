@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Compile C++ code
-      run: g++ -o ${{ matrix.executable }} main.cpp
+      run: g++ -o ${{ matrix.executable }} ./main.cpp
       shell: bash
 
     - name: List output files (debugging)
