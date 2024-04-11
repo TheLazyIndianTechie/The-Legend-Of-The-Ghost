@@ -33,11 +33,9 @@ jobs:
 
     - name: Archive the build
       run: |
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          7z a ${{ matrix.executable }}.${{ matrix.extension }} ${{ matrix.executable }}
-        else
-          tar -czvf ${{ matrix.executable }}.${{ matrix.extension }} ${{ matrix.executable }}
-        fi
+        Compress-Archive -Path ${{ matrix.executable }} -DestinationPath ${{ matrix.executable }}.zip
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
