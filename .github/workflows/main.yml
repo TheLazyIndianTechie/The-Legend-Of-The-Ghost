@@ -35,12 +35,20 @@ jobs:
         else
           tar -czvf ${{ matrix.executable }}.tar.gz ${{ matrix.executable }}
         fi
+    - name: Determine artifact name
+      run: |
+        if [[ ${{ matrix.os }} == "windows-latest" ]]; then
+          echo "ARTIFACT_NAME=${{ matrix.executable }}.zip" >> $GITHUB_ENV
+        else
+          echo "ARTIFACT_NAME=${{ matrix.executable }}.tar.gz" >> $GITHUB_ENV
+      shell: bash
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.executable }}-artifact
-        path: ${{ matrix.os == 'windows-latest' && (matrix.executable + '.zip') || (matrix.executable + '.tar.gz') }}
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ env.ARTIFACT_NAME }}
+
 
   release:
     needs: build
