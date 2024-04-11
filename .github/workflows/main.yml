@@ -14,10 +14,13 @@ jobs:
         include:
           - os: ubuntu-latest
             executable: TheLegendOfTheGhost_Linux
+            extension: tar.gz
           - os: windows-latest
-            executable: TheLegendOfTheGhost_Windows.exe
+            executable: TheLegendOfTheGhost_Windows
+            extension: zip
           - os: macos-latest
             executable: TheLegendOfTheGhost_Mac
+            extension: tar.gz
     steps:
     - uses: actions/checkout@v2
 
@@ -30,73 +33,68 @@ jobs:
 
     - name: Archive the build
       run: |
-        if [ ${{ matrix.os }} == "windows-latest" ]; then
-          7z a ${{ matrix.executable }}.zip ${{ matrix.executable }}
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          7z a ${{ matrix.executable }}.${{ matrix.extension }} ${{ matrix.executable }}
         else
-          tar -czvf ${{ matrix.executable }}.tar.gz ${{ matrix.executable }}
+          tar -czvf ${{ matrix.executable }}.${{ matrix.extension }} ${{ matrix.executable }}
         fi
-    - name: Determine artifact name
-      run: |
-        if [[ ${{ matrix.os }} == "windows-latest" ]]; then
-          echo "ARTIFACT_NAME=${{ matrix.executable }}.zip" >> $GITHUB_ENV
-        else
-          echo "ARTIFACT_NAME=${{ matrix.executable }}.tar.gz" >> $GITHUB_ENV
-      shell: bash
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ env.ARTIFACT_NAME }}
-        path: ${{ env.ARTIFACT_NAME }}
-
+        name: ${{ matrix.executable }}.${{ matrix.extension }}
+        path: ${{ matrix.executable }}.${{ matrix.extension }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-      - name: Download all Artifacts
-        uses: actions/download-artifact@v2
+    - name: Download all Artifacts
+      uses: actions/download-artifact@v2
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
 
-      - name: Upload Release Asset (Linux)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./TheLegendOfTheGhost_Linux.tar.gz
-          asset_name: TheLegendOfTheGhost_Linux.tar.gz
-          asset_content_type: application/gzip
+    - name: Upload Release Asset (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./TheLegendOfTheGhost_Linux.tar.gz
+        asset_name: TheLegendOfTheGhost_Linux.tar.gz
+        asset_content_type: application/gzip
 
-      - name: Upload Release Asset (Windows)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./TheLegendOfTheGhost_Windows.zip
-          asset_name: TheLegendOfTheGhost_Windows.zip
-          asset_content_type: application/zip
+    - name: Upload Release Asset (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./TheLegendOfTheGhost_Windows.zip
+        asset_name: TheLegendOfTheGhost_Windows.zip
+        asset_content_type: application/zip
 
-      - name: Upload Release Asset (Mac)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./TheLegendOfTheGhost_Mac.tar.gz
-          asset_name: TheLegendOfTheGhost_Mac.tar.gz
-          asset_content_type: application/gzip
+    - name: Upload Release Asset (Mac)
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./TheLegendOfTheGhost_Mac.tar.gz
+        asset_name: TheLegendOfTheGhost_Mac.tar.gz
+        asset_content_type: application/gzip
