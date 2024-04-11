@@ -25,12 +25,12 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Compile C++ code
-      run: g++ -o ${{ matrix.executable }} ./main.cpp
+      run: g++ -o ${{ matrix.executable }} main.cpp
       shell: bash
 
     - name: List output files (debugging)
       run: |
-        if [ ${{ matrix.os }} == 'windows-latest' ]; then
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
           dir
         else
           ls -la
@@ -43,14 +43,7 @@ jobs:
 
     - name: Archive the build (Windows)
       if: matrix.os == 'windows-latest'
-      run: |
-        $exePath = "${{ matrix.executable }}"
-        if (Test-Path $exePath) {
-          Compress-Archive -Path $exePath -DestinationPath $exePath.${{ matrix.extension }}
-        } else {
-          Write-Error "Executable not found at path: $exePath"
-          exit 1
-        }
+      run: Compress-Archive -Path ${{ matrix.executable }} -DestinationPath ${{ matrix.executable }}.${{ matrix.extension }}
       shell: pwsh
 
     - name: Upload Artifact
