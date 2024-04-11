@@ -24,18 +24,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    # Add additional steps for dependencies or setup if necessary here
-
     - name: Compile C++ code
-      run: |
-        g++ -o ${{ matrix.executable }} main.cpp
+      run: g++ -o ${{ matrix.executable }} main.cpp
       shell: bash
 
-    - name: Archive the build
-      run: |
-        Compress-Archive -Path ${{ matrix.executable }} -DestinationPath ${{ matrix.executable }}.zip
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
+    - name: Archive the build (Linux and macOS)
+      if: matrix.os != 'windows-latest'
+      run: tar -czvf ${{ matrix.executable }}.${{ matrix.extension }} ${{ matrix.executable }}
+
+    - name: Archive the build (Windows)
+      if: matrix.os == 'windows-latest'
+      run: Compress-Archive -Path ${{ matrix.executable }} -DestinationPath ${{ matrix.executable }}.${{ matrix.extension }}
+      shell: pwsh
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
