@@ -16,7 +16,7 @@ jobs:
             executable: TheLegendOfTheGhost_Linux
             extension: tar.gz
           - os: windows-latest
-            executable: TheLegendOfTheGhost_Windows
+            executable: TheLegendOfTheGhost_Windows.exe
             extension: zip
           - os: macos-latest
             executable: TheLegendOfTheGhost_Mac
@@ -28,13 +28,29 @@ jobs:
       run: g++ -o ${{ matrix.executable }} main.cpp
       shell: bash
 
+    - name: List output files (debugging)
+      run: |
+        if [ ${{ matrix.os }} == 'windows-latest' ]; then
+          dir
+        else
+          ls -la
+        fi
+      shell: bash
+
     - name: Archive the build (Linux and macOS)
       if: matrix.os != 'windows-latest'
       run: tar -czvf ${{ matrix.executable }}.${{ matrix.extension }} ${{ matrix.executable }}
 
     - name: Archive the build (Windows)
       if: matrix.os == 'windows-latest'
-      run: Compress-Archive -Path ${{ matrix.executable }} -DestinationPath ${{ matrix.executable }}.${{ matrix.extension }}
+      run: |
+        $exePath = "${{ matrix.executable }}"
+        if (Test-Path $exePath) {
+          Compress-Archive -Path $exePath -DestinationPath $exePath.${{ matrix.extension }}
+        } else {
+          Write-Error "Executable not found at path: $exePath"
+          exit 1
+        }
       shell: pwsh
 
     - name: Upload Artifact
@@ -82,8 +98,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./TheLegendOfTheGhost_Windows.zip
-        asset_name: TheLegendOfTheGhost_Windows.zip
+        asset_path: ./TheLegendOfTheGhost_Windows.exe.zip
+        asset_name: TheLegendOfTheGhost_Windows.exe.zip
         asset_content_type: application/zip
 
     - name: Upload Release Asset (Mac)
